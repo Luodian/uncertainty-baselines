@@ -1,0 +1,36 @@
+# Task-specific configurations for DeepBank evaluation/inference.
+from __gin__ import dynamic_registration
+
+from t5x import utils
+
+# Register necessary SeqIO Tasks/Mixtures.
+import uncertainty_baselines.baselines.t5.data.mixtures
+
+import decoding  # local file import from baselines.t5
+import models  # local file import from baselines.t5.models
+
+MIXTURE_OR_TASK_NAME = 'deepbank_1.1_infer'
+
+# Configure a binary classification model.
+# Note on targets: for classification, only one target token (class ID) is needed.
+TASK_FEATURE_LENGTHS = {'inputs': 512, 'targets': 512}
+
+# Disable caching since ub tasks are not cached in the official directory.
+USE_CACHED_TASKS = False
+
+# Adjust checkpoint saving.
+utils.SaveCheckpointConfig:
+  period = 10000
+  dtype = 'float32'
+  keep = 5  # keep the latest 5 checkpoints.
+  save_dataset = False  # don't checkpoint dataset state
+
+# Decoding override to write Top-K beams and scores to output.
+models.EncoderDecoderBeamScoreModel.predict_batch_with_aux.num_decodes = 5
+models.EncoderDecoderBeamScoreModel.predict_batch_with_aux.return_all_decodes = True
+models.EncoderDecoderBeamScoreModel.predict_batch.return_scores = True
+
+# Set beam search parameters.
+models.EncoderDecoderBeamScoreModel.decode_fn = @decoding.beam_search
+decoding.beam_search.alpha = 0.6
+decoding.beam_search.return_token_scores = True

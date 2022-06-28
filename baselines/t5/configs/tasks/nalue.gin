@@ -1,0 +1,33 @@
+# Task-specific configurations for NaLUE.
+from __gin__ import dynamic_registration
+
+from t5x import checkpoints
+from t5x import utils
+
+# Register necessary SeqIO Tasks/Mixtures.
+import uncertainty_baselines.baselines.t5.data.mixtures
+import nalue as nalue_task  # local file import from baselines.t5.data.tasks
+
+MIXTURE_OR_TASK_NAME = 'nalue'
+
+# Configure a binary classification model.
+# Note on targets: for compositional intent detection, three target tokens
+# (vertical name, domain name, intent name) are needed.
+TASK_FEATURE_LENGTHS = {'inputs': 512, 'targets': 3}
+LABEL_TOKENS = @nalue_task.get_nalue_intent_tokens()
+
+# Disable caching since ub tasks are not cached in the official directory.
+USE_CACHED_TASKS = False
+
+# Adjust checkpoint saving.
+utils.SaveCheckpointConfig:
+  period = 10000
+  dtype = 'float32'
+  keep = 1  # keep the best checkpoint.
+  save_dataset = False  # don't checkpoint dataset state
+  checkpointer_cls = @checkpoints.SaveBestCheckpointer
+
+checkpoints.SaveBestCheckpointer:
+  metric_name_to_monitor = 'inference_eval/nalue/eval/auprc'
+  metric_mode = 'max'
+  keep_checkpoints_without_metrics = False

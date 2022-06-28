@@ -1,0 +1,29 @@
+# Task-specific configurations for dataflow tasks.
+from __gin__ import dynamic_registration
+
+from t5x import utils
+
+# Register necessary SeqIO Tasks/Mixtures.
+import uncertainty_baselines.baselines.t5.data.mixtures
+
+MIXTURE_OR_TASK_NAME = 'smcalflow'
+
+# Configure a binary classification model.
+# Note on targets: for classification, only one target token (class ID) is needed.
+TASK_FEATURE_LENGTHS = {'inputs': 512, 'targets': 512}
+
+# Disable caching since ub tasks are not cached in the official directory.
+USE_CACHED_TASKS = False
+
+# Adjust checkpoint saving.
+utils.SaveCheckpointConfig:
+  period = 10000
+  dtype = 'float32'
+  keep = 1  # keep the best checkpoint.
+  save_dataset = False  # don't checkpoint dataset state
+  checkpointer_cls = @checkpoints.SaveBestCheckpointer
+
+checkpoints.SaveBestCheckpointer:
+  metric_name_to_monitor = 'inference_eval/sequence_accuracy'
+  metric_mode = 'max'
+  keep_checkpoints_without_metrics = False

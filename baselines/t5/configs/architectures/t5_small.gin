@@ -1,0 +1,12 @@
+from __gin__ import dynamic_registration
+
+from t5x.examples.t5 import network
+
+network.T5Config:
+  emb_dim = 512
+  num_heads = 8
+  num_encoder_layers = 6
+  num_decoder_layers = 6
+  mlp_dim = 2048
+  mlp_activations = ('relu',)
+  logits_via_embedding = True
